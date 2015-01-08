@@ -2,11 +2,34 @@
 package ignore
 
 import (
-    "fmt"
+    "os"
 
+    "io/ioutil"
+    "path/filepath"
+
+    "fmt"
     "testing"
+
     "github.com/stretchr/testify/assert"
 )
+
+const (
+    TEST_DIR = "test_fixtures"
+)
+
+// Helper function to setup a test fixture dir and write to
+// it a file with the name "fname" and content "content"
+func writeFileToTestDir(fname, content string) {
+    testDirPath := "." + string(filepath.Separator) + TEST_DIR
+    testFilePath := testDirPath + string(filepath.Separator) + fname
+
+    _ = os.MkdirAll(testDirPath, 0755)
+    _ = ioutil.WriteFile(testFilePath, []byte(content), os.ModePerm)
+}
+
+func cleanupTestDir() {
+    _ = os.RemoveAll(fmt.Sprintf(".%s%s", string(filepath.Separator), TEST_DIR))
+}
 
 // Validate `CompileIgnoreLines()`
 func TestCompileIgnoreLines(test *testing.T) {
@@ -50,8 +73,10 @@ func TestCompileIgnoreFile_InvalidFile(test *testing.T) {
 // Validate `CompileIgnoreFile()` for an empty files
 func TestCompileIgnoreLines_EmptyFile(test *testing.T) {
     fmt.Println(" * Testing CompileIgnoreFile() for empty file")
+    writeFileToTestDir("test.gitignore", ``)
+    defer cleanupTestDir()
 
-    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore.0")
+    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
@@ -63,8 +88,15 @@ func TestCompileIgnoreLines_EmptyFile(test *testing.T) {
 // Validate `CompileIgnoreFile()` 1
 func TestCompileIgnoreLines_1(test *testing.T) {
     fmt.Println(" * Testing CompileIgnoreFile() exclude all but...")
+    writeFileToTestDir("test.gitignore", `
+# exclude everything except directory foo/bar
+/*
+!/foo
+/foo/*
+!/foo/bar`)
+    defer cleanupTestDir()
 
-    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore.1")
+    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
@@ -77,8 +109,21 @@ func TestCompileIgnoreLines_1(test *testing.T) {
 // Validate `CompileIgnoreFile()` 2
 func TestCompileIgnoreLines_2(test *testing.T) {
     fmt.Println(" * Testing CompileIgnoreFile() file space stuffs")
+    writeFileToTestDir("test.gitignore", `
 
-    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore.2")
+#
+# A comment
+
+# Another comment
+
+
+          # Comment
+
+abc/def
+`)
+    defer cleanupTestDir()
+
+    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 

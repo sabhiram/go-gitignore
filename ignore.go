@@ -11,7 +11,7 @@ import (
 )
 
 type IgnoreParser interface {
-    AcceptsPath(f string) bool
+    IncludesPath(f string) bool
     IgnoresPath(f string) bool
 }
 
@@ -19,7 +19,7 @@ type GitIgnore struct {
     patterns []*regexp.Regexp
 }
 
-func CompileLines(lines ...string) (*GitIgnore, error) {
+func CompileIgnoreLines(lines ...string) (*GitIgnore, error) {
     g := new(GitIgnore)
     for _, line := range lines {
         // TODO: This is temporary:
@@ -29,16 +29,16 @@ func CompileLines(lines ...string) (*GitIgnore, error) {
     return g, nil
 }
 
-func CompileFile(fpath string) (*GitIgnore, error) {
+func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
     buffer, error := ioutil.ReadFile(fpath)
     if error == nil {
         s := strings.Split(string(buffer), "\n")
-        return CompileLines(s...)
+        return CompileIgnoreLines(s...)
     }
     return nil, error
 }
 
-func (g GitIgnore) AcceptsPath(f string) bool {
+func (g GitIgnore) IncludesPath(f string) bool {
     for _, pattern := range g.patterns {
         if pattern.MatchString(f) { return false }
     }
@@ -46,5 +46,5 @@ func (g GitIgnore) AcceptsPath(f string) bool {
 }
 
 func (g GitIgnore) IgnoresPath(f string) bool {
-    return !g.AcceptsPath(f)
+    return !g.IncludesPath(f)
 }

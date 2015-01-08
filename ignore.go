@@ -22,9 +22,8 @@ type GitIgnore struct {
 func CompileLines(lines ...string) (*GitIgnore, error) {
     g := new(GitIgnore)
     for _, line := range lines {
-        // fmt.Println("Line: " + line)
         // TODO: This is temporary:
-        pattern, _ := regexp.Compile("^" + line + "$")
+        pattern, _ := regexp.Compile("^" + line + "(|/.*)$")
         g.patterns = append(g.patterns, pattern)
     }
     return g, nil

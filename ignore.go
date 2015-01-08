@@ -5,16 +5,10 @@
 package ignore
 
 import (
-    "fmt"
     "strings"
-
     "regexp"
-
     "io/ioutil"
 )
-
-// TODO: Use fmt
-var _ = fmt.Println
 
 type IgnoreParser interface {
     AcceptsPath(f string) bool
@@ -40,7 +34,6 @@ func CompileFile(fpath string) (*GitIgnore, error) {
     buffer, error := ioutil.ReadFile(fpath)
     if error == nil {
         s := strings.Split(string(buffer), "\n")
-        fmt.Println(s)
         return CompileLines(s...)
     }
     return nil, error

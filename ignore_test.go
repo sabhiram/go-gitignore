@@ -10,10 +10,9 @@ import (
 
 // Validate `CompileLines()`
 func TestCompileLines(test *testing.T) {
-    fmt.Println("")
     fmt.Println("Testing ignore.CompileLines(s ...string)")
 
-    lines := []string{"abc/def", "a/b/c", "b"}
+    lines := []string{"abc/def(|/.*)", "a/b/c(|/.*)", "b(|/.*)"}
     object2, error := CompileLines(lines...)
 
     // Validate no error
@@ -41,7 +40,6 @@ func TestCompileLines(test *testing.T) {
 
 // Validate `CompileFile()` for invalid files
 func TestCompileFile_InvalidFile(test *testing.T) {
-    fmt.Println("")
     fmt.Println("Testing CompileFile() for invalid file")
 
     object, error := CompileFile("./test_fixtures/invalid.file")
@@ -51,7 +49,6 @@ func TestCompileFile_InvalidFile(test *testing.T) {
 
 // Validate `CompileFile()` for an empty files
 func TestCompileLines_EmptyFile(test *testing.T) {
-    fmt.Println("")
     fmt.Println("Testing CompileFile() for empty file")
 
     object, error := CompileFile("./test_fixtures/test.gitignore")

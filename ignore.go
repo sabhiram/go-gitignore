@@ -58,22 +58,25 @@ import (
     "io/ioutil"
 )
 
+// TODO: Remove after dev
+var _ = fmt.Printf
+
 // An IgnoreParser is an interface which exposes two methods:
 //   IncludesPath() - Returns true if the path will be included
 //   IgnoresPath()  - Returns true if the path will be excluded
 type IgnoreParser interface {
     IncludesPath(f string) bool
-    IgnoresPath(f string) bool
+    IgnoresPath(f string)  bool
 }
 
 // GitIgnore is a struct which contains a slice of regexp.Regexp
-// patterns.
+// patterns
 type GitIgnore struct {
     patterns []*regexp.Regexp
 }
 
-// This function pretty much attempts to mimic the parsing
-// rules listed above at the start of this file
+// This function pretty much attempts to mimic the parsing rules
+// listed above at the start of this file
 func getPatternFromLine(line string) *regexp.Regexp {
     // Strip comments
     r := regexp.MustCompile("^(.*?)#.*$")
@@ -85,9 +88,11 @@ func getPatternFromLine(line string) *regexp.Regexp {
     // Exit for no-ops
     if line == "" { return nil }
 
+    // Escape forward slash for regex (this might need to move)
+
     // Temporary regex
     expr := "^" + line + "(|/.*)$"
-    fmt.Printf("Line: %s has pattern: %s\n", line, expr)
+    //fmt.Printf("Line: %s has pattern: %s\n", line, expr)
     pattern, error := regexp.Compile(expr)
     if error == nil {
         return pattern

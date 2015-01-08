@@ -33,7 +33,6 @@ func cleanupTestDir() {
 
 // Validate `CompileIgnoreLines()`
 func TestCompileIgnoreLines(test *testing.T) {
-    fmt.Println(" * Testing CompileIgnoreLines()")
 
     lines := []string{"abc/def", "a/b/c", "b"}
     object2, error := CompileIgnoreLines(lines...)
@@ -63,7 +62,6 @@ func TestCompileIgnoreLines(test *testing.T) {
 
 // Validate `CompileIgnoreFile()` for invalid files
 func TestCompileIgnoreFile_InvalidFile(test *testing.T) {
-    fmt.Println(" * Testing CompileIgnoreFile() for invalid file")
 
     object, error := CompileIgnoreFile("./test_fixtures/invalid.file")
     assert.Nil(test, object, "object should be nil")
@@ -72,7 +70,6 @@ func TestCompileIgnoreFile_InvalidFile(test *testing.T) {
 
 // Validate `CompileIgnoreFile()` for an empty files
 func TestCompileIgnoreLines_EmptyFile(test *testing.T) {
-    fmt.Println(" * Testing CompileIgnoreFile() for empty file")
     writeFileToTestDir("test.gitignore", ``)
     defer cleanupTestDir()
 
@@ -87,7 +84,6 @@ func TestCompileIgnoreLines_EmptyFile(test *testing.T) {
 
 // Validate `CompileIgnoreFile()` 1
 func TestCompileIgnoreLines_1(test *testing.T) {
-    fmt.Println(" * Testing CompileIgnoreFile() exclude all but...")
     writeFileToTestDir("test.gitignore", `
 # exclude everything except directory foo/bar
 /*
@@ -108,9 +104,7 @@ func TestCompileIgnoreLines_1(test *testing.T) {
 
 // Validate `CompileIgnoreFile()` 2
 func TestCompileIgnoreLines_2(test *testing.T) {
-    fmt.Println(" * Testing CompileIgnoreFile() file space stuffs")
     writeFileToTestDir("test.gitignore", `
-
 #
 # A comment
 

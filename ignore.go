@@ -93,11 +93,8 @@ func getPatternFromLine(line string) *regexp.Regexp {
     // Temporary regex
     expr := "^" + line + "(|/.*)$"
     //fmt.Printf("Line: %s has pattern: %s\n", line, expr)
-    pattern, error := regexp.Compile(expr)
-    if error == nil {
-        return pattern
-    }
-    return nil
+    pattern, _ := regexp.Compile(expr)
+    return pattern
 }
 
 // Accepts a variadic set of strings, and returns a GitIgnore object which

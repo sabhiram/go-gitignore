@@ -111,7 +111,7 @@ func TestCompileIgnoreLines_HandleSpaces(test *testing.T) {
 # Another comment
 
 
-          # Comment
+          # Invalid Comment
 
 abc/def
 `)
@@ -121,12 +121,12 @@ abc/def
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, 1, len(object.patterns), "should have single regex pattern")
+    assert.Equal(test, 2, len(object.patterns), "should have two regex pattern")
     assert.Equal(test, false, object.IgnoresPath("abc/abc"), "/abc/abc should not be ignored")
     assert.Equal(test, true,  object.IgnoresPath("abc/def"), "/abc/def should be ignored")
 }
 
-// Validate "CompileIgnoreFile()" for correct handling leading / chars
+// Validate "CompileIgnoreFile()" for correct handling of leading / chars
 func TestCompileIgnoreLines_HandleLeadingSlash(test *testing.T) {
     writeFileToTestDir("test.gitignore", `
 /a/b/c
@@ -150,3 +150,22 @@ d/e/f
 // FILE based path checking tests
 //
 
+// Validate "CompileIgnoreFile()" for correct handling of files starting with # or !
+func TestCompileIgnoreLines_HandleLeadingSpecialChars(test *testing.T) {
+    writeFileToTestDir("test.gitignore", `
+# Comment
+\#file.txt
+\!file.txt
+file.txt
+`)
+    defer cleanupTestDir()
+
+    object, _ := CompileIgnoreFile("./test_fixtures/test.gitignore")
+    assert.NotNil(test, object, "object should not be nil")
+
+    assert.Equal(test, true,  object.IgnoresPath("#file.txt"),  "#file.txt should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("!file.txt"),  "!file.txt should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("file.txt"),   "file.txt should be ignored")
+    assert.Equal(test, false, object.IgnoresPath("file2.txt"),  "file2.txt should not be ignored")
+    assert.Equal(test, false, object.IgnoresPath("a/file.txt"), "a/file.txt should not be ignored")
+}

@@ -79,9 +79,14 @@ type GitIgnore struct {
 // listed above at the start of this file
 func getPatternFromLine(line string) *regexp.Regexp {
     // Strip comments [rule 2]
-    // TODO: Handle [rule 2], when # is escaped with a \
-    r := regexp.MustCompile("^(.*?)#.*$")
-    line = r.ReplaceAllString(line, "$1")
+    if regexp.MustCompile(`^#`).MatchString(line) { return nil }
+
+    // TODO: Handle [rule 4] which negates the match for patterns leading with "!"
+
+    // Handle [rule 2, 4], when # or ! is escaped with a \
+    if regexp.MustCompile(`^(\#|\!)`).MatchString(line) {
+        line = line[1:]
+    }
 
     // Trim string [rule 3]
     // TODO: Hanlde [rule 3], when the " " is escaped with a \

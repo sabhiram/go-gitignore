@@ -72,16 +72,19 @@ type IgnoreParser interface {
 // GitIgnore is a struct which contains a slice of regexp.Regexp
 // patterns
 type GitIgnore struct {
-    patterns []*regexp.Regexp // List of regexp patterns which this ignore file applies
+    positivePatterns []*regexp.Regexp // List of positive regexp patterns which this ignore file applies
+    negativePatterns []*regexp.Regexp // List of negative regexp patterns which this ignore file applies
+
+    // DEBUG
+    // lines []string
+    // DEBUG
 }
 
 // This function pretty much attempts to mimic the parsing rules
 // listed above at the start of this file
-func getPatternFromLine(line string) *regexp.Regexp {
-    origLine := line
-
+func getPatternFromLine(line string) (*regexp.Regexp, bool) {
     // Strip comments [Rule 2]
-    if regexp.MustCompile(`^#`).MatchString(line) { return nil }
+    if regexp.MustCompile(`^#`).MatchString(line) { return nil, false }
 
     // Trim string [Rule 3]
     // TODO: Hanlde [Rule 3], when the " " is escaped with a \
@@ -89,7 +92,7 @@ func getPatternFromLine(line string) *regexp.Regexp {
 
     // Exit for no-ops and return nil which will prevent us from
     // appending a pattern against this line
-    if line == "" { return nil }
+    if line == "" { return nil, false }
 
     // TODO: Handle [Rule 4] which negates the match for patterns leading with "!"
     negatePattern := false
@@ -120,15 +123,9 @@ func getPatternFromLine(line string) *regexp.Regexp {
 
     // Temporary regex
     expr := line + "(|/.*)$"
-
-    // Negative lookaround if we need to negate
-    if negatePattern {
-        expr = "(?!(" + expr + "))"
-    }
-
-    fmt.Printf("Line: %s has pattern: %s\n", origLine, expr)
     pattern, _ := regexp.Compile(expr)
-    return pattern
+
+    return pattern, negatePattern
 }
 
 // Accepts a variadic set of strings, and returns a GitIgnore object which
@@ -137,9 +134,16 @@ func getPatternFromLine(line string) *regexp.Regexp {
 func CompileIgnoreLines(lines ...string) (*GitIgnore, error) {
     g := new(GitIgnore)
     for _, line := range lines {
-        pattern := getPatternFromLine(line)
+        pattern, negatePattern := getPatternFromLine(line)
         if pattern != nil {
-            g.patterns = append(g.patterns, pattern)
+            if negatePattern {
+                g.negativePatterns = append(g.negativePatterns, pattern)
+            } else {
+                g.positivePatterns = append(g.positivePatterns, pattern)
+            }
+            // DEBUG
+            // g.lines = append(g.lines, line)
+            // DEBUG
         }
     }
     return g, nil
@@ -160,10 +164,27 @@ func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
 // It returns true if the given GitIgnore structure would not reject the path
 // being queried against
 func (g GitIgnore) IncludesPath(f string) bool {
-    for _, pattern := range g.patterns {
-        if pattern.MatchString(f) { return false }
+    //fmt.Println("Matching string: " + f)
+
+    positiveMatch := false
+    for _, pattern := range g.positivePatterns {
+        // DEBUG
+        // fmt.Println("  with: " + g.exprs[idx] + " from line: " + g.lines[idx])
+        // DEBUG
+        if pattern.MatchString(f) {
+            positiveMatch = true
+            break
+        }
     }
-    return true
+
+    negativeMatch := false
+    for _, pattern := range g.negativePatterns {
+        if pattern.MatchString(f) {
+            negativeMatch = true
+        }
+    }
+
+    return !positiveMatch || negativeMatch
 }
 
 // IgnoresPath is an interface function for the IgnoreParser interface.

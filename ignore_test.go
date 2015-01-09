@@ -98,9 +98,9 @@ func TestCompileIgnoreLines_HandleIncludePattern(test *testing.T) {
     assert.NotNil(test, object, "object should not be nil")
 
     assert.Equal(test, true,  object.IgnoresPath("a"),        "a should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("/foo/baz"), "/foo/baz should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("foo/baz"), "foo/baz should be ignored")
     assert.Equal(test, false, object.IgnoresPath("foo"),      "foo should not be ignored")
-    //assert.Equal(test, false, object.IgnoresPath("/foo/bar"), "/foo/bar should not be ignored")
+    assert.Equal(test, false, object.IgnoresPath("/foo/bar"), "/foo/bar should not be ignored")
 }
 
 // Validate the correct handling of comments and empty lines
@@ -112,7 +112,7 @@ func TestCompileIgnoreLines_HandleSpaces(test *testing.T) {
 # Another comment
 
 
-          # Invalid Comment
+    # Invalid Comment
 
 abc/def
 `)
@@ -122,7 +122,7 @@ abc/def
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, 2, len(object.positivePatterns), "should have two regex pattern")
+    assert.Equal(test, 2, len(object.patterns), "should have two regex pattern")
     assert.Equal(test, false, object.IgnoresPath("abc/abc"), "/abc/abc should not be ignored")
     assert.Equal(test, true,  object.IgnoresPath("abc/def"), "/abc/def should be ignored")
 }
@@ -140,7 +140,7 @@ d/e/f
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, 3, len(object.positivePatterns), "should have 3 regex patterns")
+    assert.Equal(test, 3, len(object.patterns), "should have 3 regex patterns")
     assert.Equal(test, true,  object.IgnoresPath("a/b/c"),   "a/b/c should be ignored")
     assert.Equal(test, true,  object.IgnoresPath("a/b/c/d"), "a/b/c/d should be ignored")
     assert.Equal(test, true,  object.IgnoresPath("d/e/f"),   "d/e/f should be ignored")

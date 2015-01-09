@@ -57,14 +57,14 @@ func TestCompileIgnoreLines(test *testing.T) {
     assert.Equal(test, true, object2.IgnoresPath("a/b/c/d"),       "a/b/c/d should be ignored")
 }
 
-// Validate "CompileIgnoreFile()" for invalid files
+// Validate the invalid files
 func TestCompileIgnoreFile_InvalidFile(test *testing.T) {
     object, error := CompileIgnoreFile("./test_fixtures/invalid.file")
     assert.Nil(test, object, "object should be nil")
     assert.NotNil(test, error, "error should be unknown file / dir")
 }
 
-// Validate "CompileIgnoreFile()" for an empty files
+// Validate the an empty files
 func TestCompileIgnoreLines_EmptyFile(test *testing.T) {
     writeFileToTestDir("test.gitignore", ``)
     defer cleanupTestDir()
@@ -82,7 +82,7 @@ func TestCompileIgnoreLines_EmptyFile(test *testing.T) {
 // FOLDER based path checking tests
 //
 
-// Validate "CompileIgnoreFile()" for correct handling of the negation operator "!"
+// Validate the correct handling of the negation operator "!"
 func TestCompileIgnoreLines_HandleIncludePattern(test *testing.T) {
     writeFileToTestDir("test.gitignore", `
 # exclude everything except directory foo/bar
@@ -102,7 +102,7 @@ func TestCompileIgnoreLines_HandleIncludePattern(test *testing.T) {
     assert.Equal(test, true,  object.IgnoresPath("/foo/bar"), "/foo/bar should be ignored")
 }
 
-// Validate "CompileIgnoreFile()" for correct handling of comments and empty lines
+// Validate the correct handling of comments and empty lines
 func TestCompileIgnoreLines_HandleSpaces(test *testing.T) {
     writeFileToTestDir("test.gitignore", `
 #
@@ -126,7 +126,7 @@ abc/def
     assert.Equal(test, true,  object.IgnoresPath("abc/def"), "/abc/def should be ignored")
 }
 
-// Validate "CompileIgnoreFile()" for correct handling of leading / chars
+// Validate the correct handling of leading / chars
 func TestCompileIgnoreLines_HandleLeadingSlash(test *testing.T) {
     writeFileToTestDir("test.gitignore", `
 /a/b/c
@@ -150,7 +150,7 @@ d/e/f
 // FILE based path checking tests
 //
 
-// Validate "CompileIgnoreFile()" for correct handling of files starting with # or !
+// Validate the correct handling of files starting with # or !
 func TestCompileIgnoreLines_HandleLeadingSpecialChars(test *testing.T) {
     writeFileToTestDir("test.gitignore", `
 # Comment
@@ -160,7 +160,8 @@ file.txt
 `)
     defer cleanupTestDir()
 
-    object, _ := CompileIgnoreFile("./test_fixtures/test.gitignore")
+    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
+    assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
     assert.Equal(test, true,  object.IgnoresPath("#file.txt"),  "#file.txt should be ignored")
@@ -168,4 +169,20 @@ file.txt
     assert.Equal(test, true,  object.IgnoresPath("file.txt"),   "file.txt should be ignored")
     assert.Equal(test, false, object.IgnoresPath("file2.txt"),  "file2.txt should not be ignored")
     assert.Equal(test, false, object.IgnoresPath("a/file.txt"), "a/file.txt should not be ignored")
+}
+
+// Validate the correct handling matching files only within a given folder
+func TestCompileIgnoreLines_HandleAllFilesInDir(test *testing.T) {
+    writeFileToTestDir("test.gitignore", `
+Documentation/*.html
+`)
+    defer cleanupTestDir()
+
+    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
+    assert.Nil(test, error, "error should be nil")
+    assert.NotNil(test, object, "object should not be nil")
+
+    assert.Equal(test, true,  object.IgnoresPath("Documentation/git.html"),             "Documentation/git.html should be ignored")
+    assert.Equal(test, false, object.IgnoresPath("Documentation/ppc/ppc.html"),         "Documentation/ppc/ppc.html should not be ignored")
+    assert.Equal(test, false, object.IgnoresPath("tools/perf/Documentation/perf.html"), "tools/perf/Documentation/perf.html should not be ignored")
 }

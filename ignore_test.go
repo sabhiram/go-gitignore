@@ -122,6 +122,6 @@ abc/def
     assert.NotNil(test, object, "object should not be nil")
 
     assert.Equal(test, 1, len(object.patterns), "should have single regex pattern")
-    assert.Equal(test, false, object.IgnoresPath("/abc/abc"), "/abc/abc should not be ignored")
-    //assert.Equal(test, true,  object.IgnoresPath("/abc/def"), "/abc/def should be ignored")
+    assert.Equal(test, false, object.IgnoresPath("abc/abc"), "/abc/abc should not be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("abc/def"), "/abc/def should be ignored")
 }

@@ -72,7 +72,7 @@ type IgnoreParser interface {
 // GitIgnore is a struct which contains a slice of regexp.Regexp
 // patterns
 type GitIgnore struct {
-    patterns []*regexp.Regexp
+    patterns []*regexp.Regexp // List of regexp patterns which this ignore file applies
 }
 
 // This function pretty much attempts to mimic the parsing rules

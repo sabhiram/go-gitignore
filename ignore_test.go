@@ -164,11 +164,13 @@ file.txt
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, true,  object.IgnoresPath("#file.txt"),  "#file.txt should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("!file.txt"),  "!file.txt should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("file.txt"),   "file.txt should be ignored")
-    assert.Equal(test, false, object.IgnoresPath("file2.txt"),  "file2.txt should not be ignored")
-    assert.Equal(test, false, object.IgnoresPath("a/file.txt"), "a/file.txt should not be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("#file.txt"),   "#file.txt should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("!file.txt"),   "!file.txt should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("a/!file.txt"), "a/!file.txt should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("file.txt"),    "file.txt should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("a/file.txt"),  "a/file.txt should be ignored")
+    assert.Equal(test, false, object.IgnoresPath("file2.txt"),   "file2.txt should not be ignored")
+
 }
 
 // Validate the correct handling matching files only within a given folder
@@ -185,4 +187,22 @@ Documentation/*.html
     assert.Equal(test, true,  object.IgnoresPath("Documentation/git.html"),             "Documentation/git.html should be ignored")
     assert.Equal(test, false, object.IgnoresPath("Documentation/ppc/ppc.html"),         "Documentation/ppc/ppc.html should not be ignored")
     assert.Equal(test, false, object.IgnoresPath("tools/perf/Documentation/perf.html"), "tools/perf/Documentation/perf.html should not be ignored")
+}
+
+// Validate the correct handling of "**"
+func TestCompileIgnoreLines_HandleDoubleStar(test *testing.T) {
+    writeFileToTestDir("test.gitignore", `
+**/foo
+bar
+`)
+    defer cleanupTestDir()
+
+    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
+    assert.Nil(test, error, "error should be nil")
+    assert.NotNil(test, object, "object should not be nil")
+
+    assert.Equal(test, true,  object.IgnoresPath("foo"),     "foo should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("baz/foo"), "baz/foo should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("bar"),     "bar should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("baz/bar"), "baz/bar should be ignored")
 }

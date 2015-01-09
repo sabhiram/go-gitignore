@@ -97,16 +97,24 @@ func getPatternFromLine(line string) *regexp.Regexp {
         line = line[1:]
     }
 
+    // If we encounter a foo/*.blah in a folder, prepend the ^ char
+    if regexp.MustCompile(`([^\/+])/.*\*\.`).MatchString(line) {
+        line = "^" + line
+    }
+
     // Handle escaping the "." char
     line = regexp.MustCompile(`\.`).ReplaceAllString(line, `\.`)
+
+    // Handle "**" usage (and special case when it is followed by a /)
+    line = regexp.MustCompile(`\*\*(/|)`).ReplaceAllString(line, `(.+|)`)
 
     // Handle escaping the "*" char
     line = regexp.MustCompile(`\*`).ReplaceAllString(line, `([^\/]+)`)
 
 
     // Temporary regex
-    expr := "^" + line + "(|/.*)$"
-    // fmt.Printf("Line: %s has pattern: %s\n", line, expr)
+    expr := line + "(|/.*)$"
+    // fmt.Printf("Line: %s has pattern: %s\n", origLine, expr)
     pattern, _ := regexp.Compile(expr)
     return pattern
 }

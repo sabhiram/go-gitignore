@@ -207,3 +207,18 @@ bar
     assert.Equal(test, true,  object.IgnoresPath("bar"),     "bar should be ignored")
     assert.Equal(test, true,  object.IgnoresPath("baz/bar"), "baz/bar should be ignored")
 }
+
+// Validate the correct handling of leading slash
+func TestCompileIgnoreLines_HandleLeadingSlashPath(test *testing.T) {
+    writeFileToTestDir("test.gitignore", `
+/*.c
+`)
+    defer cleanupTestDir()
+
+    object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
+    assert.Nil(test, error, "error should be nil")
+    assert.NotNil(test, object, "object should not be nil")
+
+    assert.Equal(test, true,  object.IgnoresPath("hello.c"),     "hello.c should be ignored")
+    assert.Equal(test, false, object.IgnoresPath("foo/hello.c"), "foo/hello.c should not be ignored")
+}

@@ -98,10 +98,14 @@ func getPatternFromLine(line string) (*regexp.Regexp, bool) {
     }
 
     // Handle [Rule 2, 4], when # or ! is escaped with a \
-    // Handle [Rule 8], strip leading /
     // Handle [Rule 4] once we tag negatePattern, strip the leading ! char
-    if regexp.MustCompile(`^(\#|\!|/)`).MatchString(line) {
+    if regexp.MustCompile(`^(\#|\!)`).MatchString(line) {
         line = line[1:]
+    }
+
+    // Handle [Rule 8], strip leading / and enforce path checking if its present
+    if regexp.MustCompile(`^/`).MatchString(line) {
+        line = "^" + line[1:]
     }
 
     // If we encounter a foo/*.blah in a folder, prepend the ^ char
@@ -158,7 +162,7 @@ func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
 func (g GitIgnore) IncludesPath(f string) bool {
     includesPath := true
     for idx, pattern := range g.patterns {
-        if pattern.MatchString(f) {
+       if pattern.MatchString(f) {
             if !g.negate[idx] {
                 includesPath = false
             } else if !includesPath {
@@ -168,6 +172,28 @@ func (g GitIgnore) IncludesPath(f string) bool {
     }
     return includesPath
 }
+
+/* DEBUG VERSION OF ABOVE FUNCTION *\
+func (g GitIgnore) IncludesPath(f string) bool {
+    includesPath := true
+    fmt.Println("Matching path for: " + f)
+    for idx, pattern := range g.patterns {
+        fmt.Printf(" with pattern: " + pattern.String())
+        if pattern.MatchString(f) {
+            if !g.negate[idx] {
+                fmt.Println( " MATCHED +")
+                includesPath = false
+            } else if !includesPath {
+                fmt.Println( " MATCHED -")
+                includesPath = true
+            }
+        } else {
+            fmt.Println( " NOT MATCHED")
+        }
+    }
+    return includesPath
+}
+\* END OF DEBUG VERSION */
 
 // IgnoresPath is an interface function for the IgnoreParser interface.
 // It returns true if the given GitIgnore structure would reject the path

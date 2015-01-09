@@ -78,6 +78,8 @@ type GitIgnore struct {
 // This function pretty much attempts to mimic the parsing rules
 // listed above at the start of this file
 func getPatternFromLine(line string) *regexp.Regexp {
+    origLine := line
+
     // Strip comments [Rule 2]
     if regexp.MustCompile(`^#`).MatchString(line) { return nil }
 
@@ -90,10 +92,14 @@ func getPatternFromLine(line string) *regexp.Regexp {
     if line == "" { return nil }
 
     // TODO: Handle [Rule 4] which negates the match for patterns leading with "!"
-
+    negatePattern := false
+    if string(line[0]) == "!" {
+        negatePattern = true
+    }
     // Handle [Rule 2, 4], when # or ! is escaped with a \
     // Handle [Rule 8], strip leading /
-    if regexp.MustCompile(`^(\#|\!|/)`).MatchString(line) {
+    // Handle [Rule 4] once we tag negatePattern, strip the leading ! char
+    if regexp.MustCompile(`^(\#|\!|!|/)`).MatchString(line) || negatePattern {
         line = line[1:]
     }
 
@@ -114,7 +120,13 @@ func getPatternFromLine(line string) *regexp.Regexp {
 
     // Temporary regex
     expr := line + "(|/.*)$"
-    // fmt.Printf("Line: %s has pattern: %s\n", origLine, expr)
+
+    // Negative lookaround if we need to negate
+    if negatePattern {
+        expr = "(?!(" + expr + "))"
+    }
+
+    fmt.Printf("Line: %s has pattern: %s\n", origLine, expr)
     pattern, _ := regexp.Compile(expr)
     return pattern
 }

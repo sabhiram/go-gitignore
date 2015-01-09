@@ -89,17 +89,18 @@ func TestCompileIgnoreLines_HandleIncludePattern(test *testing.T) {
 /*
 !/foo
 /foo/*
-!/foo/bar`)
+!/foo/bar
+`)
     defer cleanupTestDir()
 
     object, error := CompileIgnoreFile("./test_fixtures/test.gitignore")
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    //assert.Equal(test, false, object.IgnoresPath("a"),        "a should not be ignored")
-    //assert.Equal(test, false, object.IgnoresPath("/foo"),     "/foo should not match")
-    //assert.Equal(test, false, object.IgnoresPath("/foo/baz"), "/foo/baz should not match")
-    assert.Equal(test, true,  object.IgnoresPath("/foo/bar"), "/foo/bar should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("a"),        "a should be ignored")
+    assert.Equal(test, true,  object.IgnoresPath("/foo/baz"), "/foo/baz should be ignored")
+    assert.Equal(test, false, object.IgnoresPath("foo"),      "foo should not be ignored")
+    //assert.Equal(test, false, object.IgnoresPath("/foo/bar"), "/foo/bar should not be ignored")
 }
 
 // Validate the correct handling of comments and empty lines

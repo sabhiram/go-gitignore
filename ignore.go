@@ -78,25 +78,22 @@ type GitIgnore struct {
 // This function pretty much attempts to mimic the parsing rules
 // listed above at the start of this file
 func getPatternFromLine(line string) *regexp.Regexp {
-    // Strip comments [rule 2]
+    // Strip comments [Rule 2]
     if regexp.MustCompile(`^#`).MatchString(line) { return nil }
 
-    // TODO: Handle [rule 4] which negates the match for patterns leading with "!"
-
-    // Handle [rule 2, 4], when # or ! is escaped with a \
-    if regexp.MustCompile(`^(\#|\!)`).MatchString(line) {
-        line = line[1:]
-    }
-
-    // Trim string [rule 3]
-    // TODO: Hanlde [rule 3], when the " " is escaped with a \
+    // Trim string [Rule 3]
+    // TODO: Hanlde [Rule 3], when the " " is escaped with a \
     line = strings.Trim(line, " ")
 
-    // Exit for no-ops
+    // Exit for no-ops and return nil which will prevent us from
+    // appending a pattern against this line
     if line == "" { return nil }
 
-    // Remove leading "/"" [rule 8]
-    if string(line[0]) == "/" {
+    // TODO: Handle [Rule 4] which negates the match for patterns leading with "!"
+
+    // Handle [Rule 2, 4], when # or ! is escaped with a \
+    // Handle [Rule 8], strip leading /
+    if regexp.MustCompile(`^(\#|\!|/)`).MatchString(line) {
         line = line[1:]
     }
 

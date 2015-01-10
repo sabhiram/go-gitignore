@@ -34,27 +34,29 @@ func cleanupTestDir() {
 // Validate "CompileIgnoreLines()"
 func TestCompileIgnoreLines(test *testing.T) {
     lines := []string{"abc/def", "a/b/c", "b"}
-
-    object2, error := CompileIgnoreLines(lines...)
+    object, error := CompileIgnoreLines(lines...)
     assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
 
     // IncludesPath
     // Paths which should not be ignored
-    assert.Equal(test, true, object2.IncludesPath("abc"), "abc should not be ignored")
-    assert.Equal(test, true, object2.IncludesPath("def"), "def should not be ignored")
-    assert.Equal(test, true, object2.IncludesPath("bd"),  "bd should not be ignored")
+    assert.Equal(test, true, object.IncludesPath("abc"), "abc should not be ignored")
+    assert.Equal(test, true, object.IncludesPath("def"), "def should not be ignored")
+    assert.Equal(test, true, object.IncludesPath("bd"),  "bd should not be ignored")
     // Paths which should be ignored
-    assert.Equal(test, false, object2.IncludesPath("abc/def/child"), "abc/def/child should be ignored")
-    assert.Equal(test, false, object2.IncludesPath("a/b/c/d"),       "a/b/c/d should be ignored")
+    assert.Equal(test, false, object.IncludesPath("abc/def/child"), "abc/def/child should be ignored")
+    assert.Equal(test, false, object.IncludesPath("a/b/c/d"),       "a/b/c/d should be ignored")
+
+    object, error = CompileIgnoreLines("abc/def", "a/b/c", "b")
+    assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
 
     // IgnorePath
-    assert.Equal(test, false, object2.IgnoresPath("abc"), "abc should not be ignored")
-    assert.Equal(test, false, object2.IgnoresPath("def"), "def should not be ignored")
-    assert.Equal(test, false, object2.IgnoresPath("bd"),  "bd should not be ignored")
+    assert.Equal(test, false, object.IgnoresPath("abc"), "abc should not be ignored")
+    assert.Equal(test, false, object.IgnoresPath("def"), "def should not be ignored")
+    assert.Equal(test, false, object.IgnoresPath("bd"),  "bd should not be ignored")
 
     // Paths which should be ignored
-    assert.Equal(test, true, object2.IgnoresPath("abc/def/child"), "abc/def/child should be ignored")
-    assert.Equal(test, true, object2.IgnoresPath("a/b/c/d"),       "a/b/c/d should be ignored")
+    assert.Equal(test, true, object.IgnoresPath("abc/def/child"), "abc/def/child should be ignored")
+    assert.Equal(test, true, object.IgnoresPath("a/b/c/d"),       "a/b/c/d should be ignored")
 }
 
 // Validate the invalid files

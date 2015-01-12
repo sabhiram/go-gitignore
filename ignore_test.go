@@ -224,3 +224,19 @@ func TestCompileIgnoreLines_HandleLeadingSlashPath(test *testing.T) {
     assert.Equal(test, true,  object.IgnoresPath("hello.c"),     "hello.c should be ignored")
     assert.Equal(test, false, object.IgnoresPath("foo/hello.c"), "foo/hello.c should not be ignored")
 }
+
+func ExampleCompileIgnoreLines() {
+    ignoreObject, error := CompileIgnoreLines([]string{"node_modules", "*.out", "foo/*.c"}...)
+    if error != nil {
+        panic("Error when compiling ignore lines: " + error.Error())
+    }
+
+    fmt.Println(ignoreObject.IgnoresPath("node_modules/test/foo.js"))
+    fmt.Println(ignoreObject.IgnoresPath("node_modules2/test.out"))
+    fmt.Println(ignoreObject.IgnoresPath("test/foo.js"))
+
+    // Output:
+    // true
+    // true
+    // false
+}

@@ -62,11 +62,11 @@ import (
 var _ = fmt.Printf
 
 // An IgnoreParser is an interface which exposes two methods:
-//   IncludesPath() - Returns true if the path will be included
-//   IgnoresPath()  - Returns true if the path will be excluded
+//   MatchesPath() - Returns true if the path is targeted by the patterns compiled in the GitIgnore structure
 type IgnoreParser interface {
     IncludesPath(f string) bool
     IgnoresPath(f string)  bool
+    MatchesPath(f string) bool
 }
 
 // GitIgnore is a struct which contains a slice of regexp.Regexp
@@ -173,31 +173,6 @@ func (g GitIgnore) IncludesPath(f string) bool {
     return includesPath
 }
 
-/* DEBUG VERSION OF ABOVE FUNCTION *\
-func (g GitIgnore) IncludesPath(f string) bool {
-    includesPath := true
-    fmt.Println("Matching path for: " + f)
-    for idx, pattern := range g.patterns {
-        fmt.Printf(" with pattern: " + pattern.String())
-        if pattern.MatchString(f) {
-            if !g.negate[idx] {
-                fmt.Println( " MATCHED +")
-                includesPath = false
-            } else if !includesPath {
-                fmt.Println( " MATCHED -")
-                includesPath = true
-            }
-        } else {
-            fmt.Println( " NOT MATCHED")
-        }
-    }
-    return includesPath
-}
-\* END OF DEBUG VERSION */
-
-// IgnoresPath is an interface function for the IgnoreParser interface.
-// It returns true if the given GitIgnore structure would reject the path
-// being queried against
-func (g GitIgnore) IgnoresPath(f string) bool {
+func (g GitIgnore) MatchesPath(f string) bool {
     return !g.IncludesPath(f)
 }

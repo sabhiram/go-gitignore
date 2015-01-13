@@ -37,26 +37,27 @@ func TestCompileIgnoreLines(test *testing.T) {
     object, error := CompileIgnoreLines(lines...)
     assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
 
-    // IncludesPath
-    // Paths which should not be ignored
-    assert.Equal(test, true, object.IncludesPath("abc"), "abc should not be ignored")
-    assert.Equal(test, true, object.IncludesPath("def"), "def should not be ignored")
-    assert.Equal(test, true, object.IncludesPath("bd"),  "bd should not be ignored")
-    // Paths which should be ignored
-    assert.Equal(test, false, object.IncludesPath("abc/def/child"), "abc/def/child should be ignored")
-    assert.Equal(test, false, object.IncludesPath("a/b/c/d"),       "a/b/c/d should be ignored")
+    // MatchesPath
+    // Paths which are targeted by the above "lines"
+    assert.Equal(test, true,  object.MatchesPath("abc/def/child"), "abc/def/child should match")
+    assert.Equal(test, true,  object.MatchesPath("a/b/c/d"),       "a/b/c/d should match")
+
+    // Paths which are not targeted by the above "lines"
+    assert.Equal(test, false, object.MatchesPath("abc"), "abc should not match")
+    assert.Equal(test, false, object.MatchesPath("def"), "def should not match")
+    assert.Equal(test, false, object.MatchesPath("bd"),  "bd should not match")
 
     object, error = CompileIgnoreLines("abc/def", "a/b/c", "b")
     assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
 
-    // IgnorePath
-    assert.Equal(test, false, object.IgnoresPath("abc"), "abc should not be ignored")
-    assert.Equal(test, false, object.IgnoresPath("def"), "def should not be ignored")
-    assert.Equal(test, false, object.IgnoresPath("bd"),  "bd should not be ignored")
+    // Paths which are targeted by the above "lines"
+    assert.Equal(test, true,  object.MatchesPath("abc/def/child"), "abc/def/child should match")
+    assert.Equal(test, true,  object.MatchesPath("a/b/c/d"),       "a/b/c/d should match")
 
-    // Paths which should be ignored
-    assert.Equal(test, true, object.IgnoresPath("abc/def/child"), "abc/def/child should be ignored")
-    assert.Equal(test, true, object.IgnoresPath("a/b/c/d"),       "a/b/c/d should be ignored")
+    // Paths which are not targeted by the above "lines"
+    assert.Equal(test, false, object.MatchesPath("abc"), "abc should not match")
+    assert.Equal(test, false, object.MatchesPath("def"), "def should not match")
+    assert.Equal(test, false, object.MatchesPath("bd"),  "bd should not match")
 }
 
 // Validate the invalid files
@@ -75,14 +76,10 @@ func TestCompileIgnoreLines_EmptyFile(test *testing.T) {
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, false, object.IgnoresPath("a"),       "should accept all paths")
-    assert.Equal(test, false, object.IgnoresPath("a/b"),     "should accept all paths")
-    assert.Equal(test, false, object.IgnoresPath(".foobar"), "should accept all paths")
+    assert.Equal(test, false, object.MatchesPath("a"),       "should not match any path")
+    assert.Equal(test, false, object.MatchesPath("a/b"),     "should not match any path")
+    assert.Equal(test, false, object.MatchesPath(".foobar"), "should not match any path")
 }
-
-//
-// FOLDER based path checking tests
-//
 
 // Validate the correct handling of the negation operator "!"
 func TestCompileIgnoreLines_HandleIncludePattern(test *testing.T) {
@@ -99,10 +96,10 @@ func TestCompileIgnoreLines_HandleIncludePattern(test *testing.T) {
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, true,  object.IgnoresPath("a"),        "a should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("foo/baz"), "foo/baz should be ignored")
-    assert.Equal(test, false, object.IgnoresPath("foo"),      "foo should not be ignored")
-    assert.Equal(test, false, object.IgnoresPath("/foo/bar"), "/foo/bar should not be ignored")
+    assert.Equal(test, true,  object.MatchesPath("a"),        "a should match")
+    assert.Equal(test, true,  object.MatchesPath("foo/baz"),  "foo/baz should match")
+    assert.Equal(test, false, object.MatchesPath("foo"),      "foo should not match")
+    assert.Equal(test, false, object.MatchesPath("/foo/bar"), "/foo/bar should not match")
 }
 
 // Validate the correct handling of comments and empty lines
@@ -125,8 +122,8 @@ abc/def
     assert.NotNil(test, object, "object should not be nil")
 
     assert.Equal(test, 2, len(object.patterns), "should have two regex pattern")
-    assert.Equal(test, false, object.IgnoresPath("abc/abc"), "/abc/abc should not be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("abc/def"), "/abc/def should be ignored")
+    assert.Equal(test, false, object.MatchesPath("abc/abc"), "/abc/abc should not match")
+    assert.Equal(test, true,  object.MatchesPath("abc/def"), "/abc/def should match")
 }
 
 // Validate the correct handling of leading / chars
@@ -143,15 +140,11 @@ d/e/f
     assert.NotNil(test, object, "object should not be nil")
 
     assert.Equal(test, 3, len(object.patterns), "should have 3 regex patterns")
-    assert.Equal(test, true,  object.IgnoresPath("a/b/c"),   "a/b/c should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("a/b/c/d"), "a/b/c/d should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("d/e/f"),   "d/e/f should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("g"),       "g should be ignored")
+    assert.Equal(test, true,  object.MatchesPath("a/b/c"),   "a/b/c should match")
+    assert.Equal(test, true,  object.MatchesPath("a/b/c/d"), "a/b/c/d should match")
+    assert.Equal(test, true,  object.MatchesPath("d/e/f"),   "d/e/f should match")
+    assert.Equal(test, true,  object.MatchesPath("g"),       "g should match")
 }
-
-//
-// FILE based path checking tests
-//
 
 // Validate the correct handling of files starting with # or !
 func TestCompileIgnoreLines_HandleLeadingSpecialChars(test *testing.T) {
@@ -167,12 +160,12 @@ file.txt
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, true,  object.IgnoresPath("#file.txt"),   "#file.txt should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("!file.txt"),   "!file.txt should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("a/!file.txt"), "a/!file.txt should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("file.txt"),    "file.txt should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("a/file.txt"),  "a/file.txt should be ignored")
-    assert.Equal(test, false, object.IgnoresPath("file2.txt"),   "file2.txt should not be ignored")
+    assert.Equal(test, true,  object.MatchesPath("#file.txt"),   "#file.txt should match")
+    assert.Equal(test, true,  object.MatchesPath("!file.txt"),   "!file.txt should match")
+    assert.Equal(test, true,  object.MatchesPath("a/!file.txt"), "a/!file.txt should match")
+    assert.Equal(test, true,  object.MatchesPath("file.txt"),    "file.txt should match")
+    assert.Equal(test, true,  object.MatchesPath("a/file.txt"),  "a/file.txt should match")
+    assert.Equal(test, false, object.MatchesPath("file2.txt"),   "file2.txt should not match")
 
 }
 
@@ -187,9 +180,9 @@ Documentation/*.html
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, true,  object.IgnoresPath("Documentation/git.html"),             "Documentation/git.html should be ignored")
-    assert.Equal(test, false, object.IgnoresPath("Documentation/ppc/ppc.html"),         "Documentation/ppc/ppc.html should not be ignored")
-    assert.Equal(test, false, object.IgnoresPath("tools/perf/Documentation/perf.html"), "tools/perf/Documentation/perf.html should not be ignored")
+    assert.Equal(test, true,  object.MatchesPath("Documentation/git.html"),             "Documentation/git.html should match")
+    assert.Equal(test, false, object.MatchesPath("Documentation/ppc/ppc.html"),         "Documentation/ppc/ppc.html should not match")
+    assert.Equal(test, false, object.MatchesPath("tools/perf/Documentation/perf.html"), "tools/perf/Documentation/perf.html should not match")
 }
 
 // Validate the correct handling of "**"
@@ -204,10 +197,10 @@ bar
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, true,  object.IgnoresPath("foo"),     "foo should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("baz/foo"), "baz/foo should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("bar"),     "bar should be ignored")
-    assert.Equal(test, true,  object.IgnoresPath("baz/bar"), "baz/bar should be ignored")
+    assert.Equal(test, true,  object.MatchesPath("foo"),     "foo should match")
+    assert.Equal(test, true,  object.MatchesPath("baz/foo"), "baz/foo should match")
+    assert.Equal(test, true,  object.MatchesPath("bar"),     "bar should match")
+    assert.Equal(test, true,  object.MatchesPath("baz/bar"), "baz/bar should match")
 }
 
 // Validate the correct handling of leading slash
@@ -221,8 +214,8 @@ func TestCompileIgnoreLines_HandleLeadingSlashPath(test *testing.T) {
     assert.Nil(test, error, "error should be nil")
     assert.NotNil(test, object, "object should not be nil")
 
-    assert.Equal(test, true,  object.IgnoresPath("hello.c"),     "hello.c should be ignored")
-    assert.Equal(test, false, object.IgnoresPath("foo/hello.c"), "foo/hello.c should not be ignored")
+    assert.Equal(test, true,  object.MatchesPath("hello.c"),     "hello.c should match")
+    assert.Equal(test, false, object.MatchesPath("foo/hello.c"), "foo/hello.c should not match")
 }
 
 func ExampleCompileIgnoreLines() {
@@ -231,9 +224,13 @@ func ExampleCompileIgnoreLines() {
         panic("Error when compiling ignore lines: " + error.Error())
     }
 
-    fmt.Println(ignoreObject.IgnoresPath("node_modules/test/foo.js"))
-    fmt.Println(ignoreObject.IgnoresPath("node_modules2/test.out"))
-    fmt.Println(ignoreObject.IgnoresPath("test/foo.js"))
+    // You can test the ignoreObject against various paths using the
+    // "MatchesPath()" interface method. This pretty much is up to
+    // the users interpretation. In the case of a ".gitignore" file,
+    // a "match" would indicate that a given path would be ignored.
+    fmt.Println(ignoreObject.MatchesPath("node_modules/test/foo.js"))
+    fmt.Println(ignoreObject.MatchesPath("node_modules2/test.out"))
+    fmt.Println(ignoreObject.MatchesPath("test/foo.js"))
 
     // Output:
     // true

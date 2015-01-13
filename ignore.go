@@ -156,23 +156,21 @@ func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
     return nil, error
 }
 
-// IncludesPath is an interface function for the IgnoreParser interface.
-// It returns true if the given GitIgnore structure would not reject the path
-// being queried against
-func (g GitIgnore) IncludesPath(f string) bool {
-    includesPath := true
+// MatchesPath is an interface function for the IgnoreParser interface.
+// It returns true if the given GitIgnore structure would target a given
+// path string "f"
+func (g GitIgnore) MatchesPath(f string) bool {
+    matchesPath := false
     for idx, pattern := range g.patterns {
-       if pattern.MatchString(f) {
+        if pattern.MatchString(f) {
+            // If this is a regular target (not negated with a gitignore exclude "!" etc)
             if !g.negate[idx] {
-                includesPath = false
-            } else if !includesPath {
-                includesPath = true
+                matchesPath = true
+            // Negated pattern, and matchesPath is already set
+            } else if matchesPath {
+                matchesPath = false
             }
         }
     }
-    return includesPath
-}
-
-func (g GitIgnore) MatchesPath(f string) bool {
-    return !g.IncludesPath(f)
+    return matchesPath
 }

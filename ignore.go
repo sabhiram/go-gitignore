@@ -52,14 +52,10 @@ The summarized version of the same has been copied here:
 package ignore
 
 import (
-    "fmt"
     "strings"
     "regexp"
     "io/ioutil"
 )
-
-// TODO: Remove after dev
-var _ = fmt.Printf
 
 // An IgnoreParser is an interface which exposes two methods:
 //   MatchesPath() - Returns true if the path is targeted by the patterns compiled in the GitIgnore structure

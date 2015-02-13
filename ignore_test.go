@@ -237,3 +237,23 @@ func ExampleCompileIgnoreLines() {
     // true
     // false
 }
+
+func TestCompileIgnoreLines_CheckNestedDotFiles(test *testing.T) {
+    lines := []string{
+        "**/external/**/*.md",
+        "**/external/**/*.json",
+        "**/external/**/*.gzip",
+        "**/external/**/.*ignore",
+
+        "**/external/foobar/*.css",
+        "**/external/barfoo/less",
+        "**/external/barfoo/scss",
+    }
+    object, error := CompileIgnoreLines(lines...)
+    assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
+    assert.NotNil(test, object, "returned object should not be nil")
+
+    assert.Equal(test, true,  object.MatchesPath("external/foobar/angular.foo.css"), "external/foobar/angular.foo.css")
+    assert.Equal(test, true,  object.MatchesPath("external/barfoo/.gitignore"), "external/barfoo/.gitignore")
+    assert.Equal(test, true,  object.MatchesPath("external/barfoo/.bower.json"), "external/barfoo/.bower.json")
+}

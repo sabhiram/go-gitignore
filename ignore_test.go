@@ -11,6 +11,7 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
+    "runtime"
 )
 
 const (
@@ -272,11 +273,13 @@ func TestCompileIgnoreLines_CarriageReturn(test *testing.T) {
 }
 
 func TestCompileIgnoreLines_WindowsPath(test *testing.T) {
+    if runtime.GOOS != "windows" {
+        return
+    }
     lines := []string{"abc/def", "a/b/c", "b"}
     object, error := CompileIgnoreLines(lines...)
     assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
 
     assert.Equal(test, true,  object.MatchesPath("abc\\def\\child"), "abc\\def\\child should match")
     assert.Equal(test, true,  object.MatchesPath("a\\b\\c\\d"),       "a\\b\\c\\d should match")
-
 }

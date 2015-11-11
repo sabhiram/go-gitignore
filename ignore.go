@@ -55,6 +55,7 @@ import (
     "strings"
     "regexp"
     "io/ioutil"
+    "os"
 )
 
 // An IgnoreParser is an interface which exposes two methods:
@@ -75,6 +76,9 @@ type GitIgnore struct {
 // This function pretty much attempts to mimic the parsing rules
 // listed above at the start of this file
 func getPatternFromLine(line string) (*regexp.Regexp, bool) {
+    // Trim OS-specific carriage returns.
+    line = strings.TrimRight(line, "\r")
+
     // Strip comments [Rule 2]
     if regexp.MustCompile(`^#`).MatchString(line) { return nil, false }
 
@@ -156,6 +160,9 @@ func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
 // It returns true if the given GitIgnore structure would target a given
 // path string "f"
 func (g GitIgnore) MatchesPath(f string) bool {
+    // Replace OS-specific path separator.
+    f = strings.Replace(f, string(os.PathSeparator), "/", -1)
+
     matchesPath := false
     for idx, pattern := range g.patterns {
         if pattern.MatchString(f) {

@@ -11,6 +11,7 @@ import (
     "testing"
 
     "github.com/stretchr/testify/assert"
+    "runtime"
 )
 
 const (
@@ -256,4 +257,29 @@ func TestCompileIgnoreLines_CheckNestedDotFiles(test *testing.T) {
     assert.Equal(test, true,  object.MatchesPath("external/foobar/angular.foo.css"), "external/foobar/angular.foo.css")
     assert.Equal(test, true,  object.MatchesPath("external/barfoo/.gitignore"), "external/barfoo/.gitignore")
     assert.Equal(test, true,  object.MatchesPath("external/barfoo/.bower.json"), "external/barfoo/.bower.json")
+}
+
+func TestCompileIgnoreLines_CarriageReturn(test *testing.T) {
+    lines := []string{"abc/def\r", "a/b/c\r", "b\r"}
+    object, error := CompileIgnoreLines(lines...)
+    assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
+
+    assert.Equal(test, true,  object.MatchesPath("abc/def/child"), "abc/def/child should match")
+    assert.Equal(test, true,  object.MatchesPath("a/b/c/d"),       "a/b/c/d should match")
+
+    assert.Equal(test, false, object.MatchesPath("abc"), "abc should not match")
+    assert.Equal(test, false, object.MatchesPath("def"), "def should not match")
+    assert.Equal(test, false, object.MatchesPath("bd"),  "bd should not match")
+}
+
+func TestCompileIgnoreLines_WindowsPath(test *testing.T) {
+    if runtime.GOOS != "windows" {
+        return
+    }
+    lines := []string{"abc/def", "a/b/c", "b"}
+    object, error := CompileIgnoreLines(lines...)
+    assert.Nil(test, error, "error from CompileIgnoreLines should be nil")
+
+    assert.Equal(test, true,  object.MatchesPath("abc\\def\\child"), "abc\\def\\child should match")
+    assert.Equal(test, true,  object.MatchesPath("a\\b\\c\\d"),       "a\\b\\c\\d should match")
 }

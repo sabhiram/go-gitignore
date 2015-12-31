@@ -80,10 +80,10 @@ func getPatternFromLine(line string) (*regexp.Regexp, bool) {
     line = strings.TrimRight(line, "\r")
 
     // Strip comments [Rule 2]
-    if regexp.MustCompile(`^#`).MatchString(line) { return nil, false }
+    if strings.HasPrefix(line, `#`) { return nil, false }
 
     // Trim string [Rule 3]
-    // TODO: Hanlde [Rule 3], when the " " is escaped with a \
+    // TODO: Handle [Rule 3], when the " " is escaped with a \
     line = strings.Trim(line, " ")
 
     // Exit for no-ops and return nil which will prevent us from
@@ -103,28 +103,45 @@ func getPatternFromLine(line string) (*regexp.Regexp, bool) {
         line = line[1:]
     }
 
-    // Handle [Rule 8], strip leading / and enforce path checking if its present
-    if regexp.MustCompile(`^/`).MatchString(line) {
-        line = "^" + line[1:]
-    }
-
-    // If we encounter a foo/*.blah in a folder, prepend the ^ char
+    // If we encounter a foo/*.blah in a folder, prepend the / char
     if regexp.MustCompile(`([^\/+])/.*\*\.`).MatchString(line) {
-        line = "^" + line
+        line = "/" + line
     }
 
     // Handle escaping the "." char
     line = regexp.MustCompile(`\.`).ReplaceAllString(line, `\.`)
 
-    // Handle "**" usage (and special case when it is followed by a /)
-    line = regexp.MustCompile(`\*\*(/|)`).ReplaceAllString(line, `(.+|)`)
+    magicStar := "#$~"
+
+    // Handle "/**/" usage
+    if strings.HasPrefix(line, "/**/") {
+        line = line[1:]
+    }
+    line = regexp.MustCompile(`/\*\*/`).ReplaceAllString(line, `(/|/.+/)`)
+    line = regexp.MustCompile(`\*\*/`).ReplaceAllString(line, `(|.` + magicStar + `/)`)
+    line = regexp.MustCompile(`/\*\*`).ReplaceAllString(line, `(|/.` + magicStar + `)`)
 
     // Handle escaping the "*" char
-    line = regexp.MustCompile(`\*`).ReplaceAllString(line, `([^\/]+)`)
+    line = regexp.MustCompile(`\\\*`).ReplaceAllString(line, `\` + magicStar)
+    line = regexp.MustCompile(`\*`).ReplaceAllString(line, `([^/]*)`)
 
+    // Handle escaping the "?" char
+    line = strings.Replace(line, "?", `\?`, -1)
+
+    line = strings.Replace(line, magicStar, "*", -1)
 
     // Temporary regex
-    expr := line + "(|/.+)$"
+    var expr = ""
+    if strings.HasSuffix(line, "/") {
+        expr = line + "(|.*)$"
+    } else {
+        expr = line + "(|/.*)$"
+    }
+    if strings.HasPrefix(expr, "/") {
+        expr = "^(|/)" + expr[1:]
+    } else {
+        expr = "^(|.*/)" + expr
+    }
     pattern, _ := regexp.Compile(expr)
 
     return pattern, negatePattern

@@ -52,145 +52,149 @@ The summarized version of the same has been copied here:
 package ignore
 
 import (
-    "strings"
-    "regexp"
-    "io/ioutil"
-    "os"
+	"io/ioutil"
+	"os"
+	"regexp"
+	"strings"
 )
 
 // An IgnoreParser is an interface which exposes two methods:
 //   MatchesPath() - Returns true if the path is targeted by the patterns compiled in the GitIgnore structure
 type IgnoreParser interface {
-    IncludesPath(f string) bool
-    IgnoresPath(f string)  bool
-    MatchesPath(f string) bool
+	IncludesPath(f string) bool
+	IgnoresPath(f string) bool
+	MatchesPath(f string) bool
 }
 
 // GitIgnore is a struct which contains a slice of regexp.Regexp
 // patterns
 type GitIgnore struct {
-    patterns []*regexp.Regexp   // List of regexp patterns which this ignore file applies
-    negate   []bool             // List of booleans which determine if the pattern is negated
+	patterns []*regexp.Regexp // List of regexp patterns which this ignore file applies
+	negate   []bool           // List of booleans which determine if the pattern is negated
 }
 
 // This function pretty much attempts to mimic the parsing rules
 // listed above at the start of this file
 func getPatternFromLine(line string) (*regexp.Regexp, bool) {
-    // Trim OS-specific carriage returns.
-    line = strings.TrimRight(line, "\r")
+	// Trim OS-specific carriage returns.
+	line = strings.TrimRight(line, "\r")
 
-    // Strip comments [Rule 2]
-    if strings.HasPrefix(line, `#`) { return nil, false }
+	// Strip comments [Rule 2]
+	if strings.HasPrefix(line, `#`) {
+		return nil, false
+	}
 
-    // Trim string [Rule 3]
-    // TODO: Handle [Rule 3], when the " " is escaped with a \
-    line = strings.Trim(line, " ")
+	// Trim string [Rule 3]
+	// TODO: Handle [Rule 3], when the " " is escaped with a \
+	line = strings.Trim(line, " ")
 
-    // Exit for no-ops and return nil which will prevent us from
-    // appending a pattern against this line
-    if line == "" { return nil, false }
+	// Exit for no-ops and return nil which will prevent us from
+	// appending a pattern against this line
+	if line == "" {
+		return nil, false
+	}
 
-    // TODO: Handle [Rule 4] which negates the match for patterns leading with "!"
-    negatePattern := false
-    if string(line[0]) == "!" {
-        negatePattern = true
-        line = line[1:]
-    }
+	// TODO: Handle [Rule 4] which negates the match for patterns leading with "!"
+	negatePattern := false
+	if string(line[0]) == "!" {
+		negatePattern = true
+		line = line[1:]
+	}
 
-    // Handle [Rule 2, 4], when # or ! is escaped with a \
-    // Handle [Rule 4] once we tag negatePattern, strip the leading ! char
-    if regexp.MustCompile(`^(\#|\!)`).MatchString(line) {
-        line = line[1:]
-    }
+	// Handle [Rule 2, 4], when # or ! is escaped with a \
+	// Handle [Rule 4] once we tag negatePattern, strip the leading ! char
+	if regexp.MustCompile(`^(\#|\!)`).MatchString(line) {
+		line = line[1:]
+	}
 
-    // If we encounter a foo/*.blah in a folder, prepend the / char
-    if regexp.MustCompile(`([^\/+])/.*\*\.`).MatchString(line) {
-        line = "/" + line
-    }
+	// If we encounter a foo/*.blah in a folder, prepend the / char
+	if regexp.MustCompile(`([^\/+])/.*\*\.`).MatchString(line) {
+		line = "/" + line
+	}
 
-    // Handle escaping the "." char
-    line = regexp.MustCompile(`\.`).ReplaceAllString(line, `\.`)
+	// Handle escaping the "." char
+	line = regexp.MustCompile(`\.`).ReplaceAllString(line, `\.`)
 
-    magicStar := "#$~"
+	magicStar := "#$~"
 
-    // Handle "/**/" usage
-    if strings.HasPrefix(line, "/**/") {
-        line = line[1:]
-    }
-    line = regexp.MustCompile(`/\*\*/`).ReplaceAllString(line, `(/|/.+/)`)
-    line = regexp.MustCompile(`\*\*/`).ReplaceAllString(line, `(|.` + magicStar + `/)`)
-    line = regexp.MustCompile(`/\*\*`).ReplaceAllString(line, `(|/.` + magicStar + `)`)
+	// Handle "/**/" usage
+	if strings.HasPrefix(line, "/**/") {
+		line = line[1:]
+	}
+	line = regexp.MustCompile(`/\*\*/`).ReplaceAllString(line, `(/|/.+/)`)
+	line = regexp.MustCompile(`\*\*/`).ReplaceAllString(line, `(|.`+magicStar+`/)`)
+	line = regexp.MustCompile(`/\*\*`).ReplaceAllString(line, `(|/.`+magicStar+`)`)
 
-    // Handle escaping the "*" char
-    line = regexp.MustCompile(`\\\*`).ReplaceAllString(line, `\` + magicStar)
-    line = regexp.MustCompile(`\*`).ReplaceAllString(line, `([^/]*)`)
+	// Handle escaping the "*" char
+	line = regexp.MustCompile(`\\\*`).ReplaceAllString(line, `\`+magicStar)
+	line = regexp.MustCompile(`\*`).ReplaceAllString(line, `([^/]*)`)
 
-    // Handle escaping the "?" char
-    line = strings.Replace(line, "?", `\?`, -1)
+	// Handle escaping the "?" char
+	line = strings.Replace(line, "?", `\?`, -1)
 
-    line = strings.Replace(line, magicStar, "*", -1)
+	line = strings.Replace(line, magicStar, "*", -1)
 
-    // Temporary regex
-    var expr = ""
-    if strings.HasSuffix(line, "/") {
-        expr = line + "(|.*)$"
-    } else {
-        expr = line + "(|/.*)$"
-    }
-    if strings.HasPrefix(expr, "/") {
-        expr = "^(|/)" + expr[1:]
-    } else {
-        expr = "^(|.*/)" + expr
-    }
-    pattern, _ := regexp.Compile(expr)
+	// Temporary regex
+	var expr = ""
+	if strings.HasSuffix(line, "/") {
+		expr = line + "(|.*)$"
+	} else {
+		expr = line + "(|/.*)$"
+	}
+	if strings.HasPrefix(expr, "/") {
+		expr = "^(|/)" + expr[1:]
+	} else {
+		expr = "^(|.*/)" + expr
+	}
+	pattern, _ := regexp.Compile(expr)
 
-    return pattern, negatePattern
+	return pattern, negatePattern
 }
 
 // Accepts a variadic set of strings, and returns a GitIgnore object which
 // converts and appends the lines in the input to regexp.Regexp patterns
 // held within the GitIgnore objects "patterns" field
 func CompileIgnoreLines(lines ...string) (*GitIgnore, error) {
-    g := new(GitIgnore)
-    for _, line := range lines {
-        pattern, negatePattern := getPatternFromLine(line)
-        if pattern != nil {
-            g.patterns = append(g.patterns, pattern)
-            g.negate = append(g.negate, negatePattern)
-        }
-    }
-    return g, nil
+	g := new(GitIgnore)
+	for _, line := range lines {
+		pattern, negatePattern := getPatternFromLine(line)
+		if pattern != nil {
+			g.patterns = append(g.patterns, pattern)
+			g.negate = append(g.negate, negatePattern)
+		}
+	}
+	return g, nil
 }
 
 // Accepts a ignore file as the input, parses the lines out of the file
 // and invokes the CompileIgnoreLines method
 func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
-    buffer, error := ioutil.ReadFile(fpath)
-    if error == nil {
-        s := strings.Split(string(buffer), "\n")
-        return CompileIgnoreLines(s...)
-    }
-    return nil, error
+	buffer, error := ioutil.ReadFile(fpath)
+	if error == nil {
+		s := strings.Split(string(buffer), "\n")
+		return CompileIgnoreLines(s...)
+	}
+	return nil, error
 }
 
 // MatchesPath is an interface function for the IgnoreParser interface.
 // It returns true if the given GitIgnore structure would target a given
 // path string "f"
 func (g GitIgnore) MatchesPath(f string) bool {
-    // Replace OS-specific path separator.
-    f = strings.Replace(f, string(os.PathSeparator), "/", -1)
+	// Replace OS-specific path separator.
+	f = strings.Replace(f, string(os.PathSeparator), "/", -1)
 
-    matchesPath := false
-    for idx, pattern := range g.patterns {
-        if pattern.MatchString(f) {
-            // If this is a regular target (not negated with a gitignore exclude "!" etc)
-            if !g.negate[idx] {
-                matchesPath = true
-            // Negated pattern, and matchesPath is already set
-            } else if matchesPath {
-                matchesPath = false
-            }
-        }
-    }
-    return matchesPath
+	matchesPath := false
+	for idx, pattern := range g.patterns {
+		if pattern.MatchString(f) {
+			// If this is a regular target (not negated with a gitignore exclude "!" etc)
+			if !g.negate[idx] {
+				matchesPath = true
+				// Negated pattern, and matchesPath is already set
+			} else if matchesPath {
+				matchesPath = false
+			}
+		}
+	}
+	return matchesPath
 }

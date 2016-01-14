@@ -304,3 +304,18 @@ func TestWildCardFiles(test *testing.T) {
 	assert.Equal(test, false, object.MatchesPath("something/not/infoo/wat.wat"), "wat files should only be ignored in foo")
 	assert.Equal(test, false, object.MatchesPath("something/not/infoo/wat.txt"), "txt files should only be ignored in bar")
 }
+
+func TestPrecedingSlash(test *testing.T) {
+	gitIgnore := []string{"/foo", "bar/"}
+	object, err := CompileIgnoreLines(gitIgnore...)
+	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+
+	assert.Equal(test, true, object.MatchesPath("foo/bar.wat"), "should ignore all files in foo - nonpreceding /")
+	assert.Equal(test, true, object.MatchesPath("/foo/something.txt"), "should ignore all files in foo - preceding /")
+
+	assert.Equal(test, true, object.MatchesPath("bar/something.txt"), "should ignore all files in bar - nonpreceding /")
+	assert.Equal(test, true, object.MatchesPath("/bar/somethingelse.go"), "should ignore all files in bar - preceding /")
+	assert.Equal(test, true, object.MatchesPath("/boo/something/bar/boo.txt"), "should block all files if bar is a sub directory")
+
+	assert.Equal(test, false, object.MatchesPath("something/foo/something.txt"), "should only ignore top level foo directories- not nested")
+}

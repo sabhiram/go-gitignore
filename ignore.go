@@ -181,6 +181,17 @@ func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
 	return nil, error
 }
 
+// Accepts a ignore file as the input, parses the lines out of the file
+// and invokes the CompileIgnoreLines method with additional lines
+func CompileIgnoreFileAndLines(fpath string, lines ...string) (*GitIgnore, error) {
+	buffer, error := ioutil.ReadFile(fpath)
+	if error == nil {
+		s := strings.Split(string(buffer), "\n")
+		return CompileIgnoreLines(append(s, lines...)...)
+	}
+	return nil, error
+}
+
 ////////////////////////////////////////////////////////////
 
 // MatchesPath is an interface function for the IgnoreParser interface.

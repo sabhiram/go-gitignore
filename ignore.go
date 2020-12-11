@@ -60,9 +60,7 @@ import (
 
 ////////////////////////////////////////////////////////////
 
-// An IgnoreParser is an interface which exposes a single method:
-//   MatchesPath() - Returns true if the path is targeted by the patterns compiled
-//                   in the GitIgnore structure
+// IgnoreParser is an interface with `MatchesPaths`.
 type IgnoreParser interface {
 	MatchesPath(f string) bool
 }
@@ -160,10 +158,10 @@ type GitIgnore struct {
 	patterns []*ignorePattern
 }
 
-// Accepts a variadic set of strings, and returns a GitIgnore object which
-// converts and appends the lines in the input to regexp.Regexp patterns
-// held within the GitIgnore objects "patterns" field
-func CompileIgnoreLines(lines ...string) (*GitIgnore, error) {
+// CompileIgnoreLines accepts a variadic set of strings, and returns a GitIgnore
+// instance which converts and appends the lines in the input to regexp.Regexp
+// patterns held within the GitIgnore objects "patterns" field.
+func CompileIgnoreLines(lines ...string) *GitIgnore {
 	gi := &GitIgnore{}
 	for _, line := range lines {
 		pattern, negatePattern := getPatternFromLine(line)
@@ -172,29 +170,32 @@ func CompileIgnoreLines(lines ...string) (*GitIgnore, error) {
 			gi.patterns = append(gi.patterns, ip)
 		}
 	}
-	return gi, nil
+	return gi
 }
 
-// Accepts a ignore file as the input, parses the lines out of the file
-// and invokes the CompileIgnoreLines method
+// CompileIgnoreFile uses an ignore file as the input, parses the lines out of
+// the file and invokes the CompileIgnoreLines method.
 func CompileIgnoreFile(fpath string) (*GitIgnore, error) {
-	buffer, error := ioutil.ReadFile(fpath)
-	if error == nil {
-		s := strings.Split(string(buffer), "\n")
-		return CompileIgnoreLines(s...)
+	bs, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		return nil, err
 	}
-	return nil, error
+
+	s := strings.Split(string(bs), "\n")
+	return CompileIgnoreLines(s...), nil
 }
 
-// Accepts a ignore file as the input, parses the lines out of the file
-// and invokes the CompileIgnoreLines method with additional lines
+// CompileIgnoreFileAndLines accepts a ignore file as the input, parses the
+// lines out of the file and invokes the CompileIgnoreLines method with
+// additional lines.
 func CompileIgnoreFileAndLines(fpath string, lines ...string) (*GitIgnore, error) {
-	buffer, error := ioutil.ReadFile(fpath)
-	if error == nil {
-		s := strings.Split(string(buffer), "\n")
-		return CompileIgnoreLines(append(s, lines...)...)
+	bs, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		return nil, err
 	}
-	return nil, error
+
+	gi := CompileIgnoreLines(append(strings.Split(string(bs), "\n"), lines...)...)
+	return gi, nil
 }
 
 ////////////////////////////////////////////////////////////
@@ -208,7 +209,8 @@ func (gi *GitIgnore) MatchesPath(f string) bool {
 	matchesPath := false
 	for _, ip := range gi.patterns {
 		if ip.pattern.MatchString(f) {
-			// If this is a regular target (not negated with a gitignore exclude "!" etc)
+			// If this is a regular target (not negated with a gitignore
+			// exclude "!" etc)
 			if !ip.negate {
 				matchesPath = true
 			} else if matchesPath {

@@ -2,14 +2,14 @@
 package ignore
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSimple(test *testing.T) {
 	lines := []string{"foo"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "foo")
 	shouldMatch(test, object, "foo/")
@@ -20,8 +20,7 @@ func TestSimple(test *testing.T) {
 
 func TestAnywhere(test *testing.T) {
 	lines := []string{"**/foo"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "foo")
 	shouldMatch(test, object, "foo/")
@@ -32,8 +31,7 @@ func TestAnywhere(test *testing.T) {
 
 func TestAnywhereFromRoot(test *testing.T) {
 	lines := []string{"/**/foo"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "foo")
 	shouldMatch(test, object, "foo/")
@@ -44,8 +42,7 @@ func TestAnywhereFromRoot(test *testing.T) {
 
 func TestSimpleDir(test *testing.T) {
 	lines := []string{"foo/"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "foo/")
 	shouldMatch(test, object, "foo/a")
@@ -56,8 +53,7 @@ func TestSimpleDir(test *testing.T) {
 
 func TestRootExtensionOnly(test *testing.T) {
 	lines := []string{"/.js"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".js")
 	shouldMatch(test, object, ".js/")
@@ -69,8 +65,7 @@ func TestRootExtensionOnly(test *testing.T) {
 
 func TestRootExtension(test *testing.T) {
 	lines := []string{"/*.js"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".js")
 	shouldMatch(test, object, ".js/")
@@ -84,8 +79,7 @@ func TestRootExtension(test *testing.T) {
 
 func TestExtension(test *testing.T) {
 	lines := []string{"*.js"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".js")
 	shouldMatch(test, object, ".js/")
@@ -98,8 +92,7 @@ func TestExtension(test *testing.T) {
 
 func TestStarExtension(test *testing.T) {
 	lines := []string{".js*"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".js")
 	shouldMatch(test, object, ".js/")
@@ -112,8 +105,7 @@ func TestStarExtension(test *testing.T) {
 
 func TestDoubleStar(test *testing.T) {
 	lines := []string{"foo/**/"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "foo/")
 	shouldMatch(test, object, "foo/abc/")
@@ -124,8 +116,7 @@ func TestDoubleStar(test *testing.T) {
 
 func TestStars(test *testing.T) {
 	lines := []string{"foo/**/*.bar"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldNotMatch(test, object, "foo/")
 	shouldNotMatch(test, object, "abc.bar")
@@ -137,24 +128,21 @@ func TestStars(test *testing.T) {
 
 func TestCases_Comment(test *testing.T) {
 	lines := []string{"#abc"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldNotMatch(test, object, "#abc")
 }
 
 func TestCases_EscapedComment(test *testing.T) {
 	lines := []string{`\#abc`}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "#abc")
 }
 
 func TestCases_CouldFilterPaths(test *testing.T) {
 	lines := []string{"abc", "!abc/b"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "abc/a.js")
 	shouldNotMatch(test, object, "abc/b/b.js")
@@ -162,8 +150,7 @@ func TestCases_CouldFilterPaths(test *testing.T) {
 
 func TestCases_IgnoreSelect(test *testing.T) {
 	lines := []string{"abc", "!abc/b", "#e", `\#f`}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "abc/a.js")
 	shouldNotMatch(test, object, "abc/b/b.js")
@@ -173,8 +160,7 @@ func TestCases_IgnoreSelect(test *testing.T) {
 
 func TestCases_EscapeRegexMetacharacters(test *testing.T) {
 	lines := []string{"*.js", `!\*.js`, "!a#b.js", "!?.js", "#abc", `\#abc`}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldNotMatch(test, object, "*.js")
 	shouldMatch(test, object, "abc.js")
@@ -186,8 +172,7 @@ func TestCases_EscapeRegexMetacharacters(test *testing.T) {
 
 func TestCases_QuestionMark(test *testing.T) {
 	lines := []string{"/.project", "thumbs.db", "*.swp", ".sonar/*", ".*.sw?"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".project")
 	shouldNotMatch(test, object, "abc/.project")
@@ -198,16 +183,14 @@ func TestCases_QuestionMark(test *testing.T) {
 
 func TestCases_DirEndedWithStar(test *testing.T) {
 	lines := []string{"abc/*"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldNotMatch(test, object, "abc")
 }
 
 func TestCases_FileEndedWithStar(test *testing.T) {
 	lines := []string{"abc.js*"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "abc.js/")
 	shouldMatch(test, object, "abc.js/abc")
@@ -217,8 +200,7 @@ func TestCases_FileEndedWithStar(test *testing.T) {
 
 func TestCases_WildcardAsFilename(test *testing.T) {
 	lines := []string{"*.b"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "b/a.b")
 	shouldMatch(test, object, "b/.b")
@@ -228,8 +210,7 @@ func TestCases_WildcardAsFilename(test *testing.T) {
 
 func TestCases_SlashAtBeginningAndComeWithWildcard(test *testing.T) {
 	lines := []string{"/*.c"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".c")
 	shouldMatch(test, object, "c.c")
@@ -239,8 +220,7 @@ func TestCases_SlashAtBeginningAndComeWithWildcard(test *testing.T) {
 
 func TestCases_DotFile(test *testing.T) {
 	lines := []string{".d"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".d")
 	shouldNotMatch(test, object, ".dd")
@@ -252,8 +232,7 @@ func TestCases_DotFile(test *testing.T) {
 
 func TestCases_DotDir(test *testing.T) {
 	lines := []string{".e"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, ".e/")
 	shouldNotMatch(test, object, ".ee/")
@@ -266,8 +245,7 @@ func TestCases_DotDir(test *testing.T) {
 
 func TestCases_PatternOnce(test *testing.T) {
 	lines := []string{"node_modules/"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "node_modules/gulp/node_modules/abc.md")
 	shouldMatch(test, object, "node_modules/gulp/node_modules/abc.json")
@@ -275,8 +253,7 @@ func TestCases_PatternOnce(test *testing.T) {
 
 func TestCases_PatternTwice(test *testing.T) {
 	lines := []string{"node_modules/", "node_modules/"}
-	object, err := CompileIgnoreLines(lines...)
-	assert.Nil(test, err, "error from CompileIgnoreLines should be nil")
+	object := CompileIgnoreLines(lines...)
 
 	shouldMatch(test, object, "node_modules/gulp/node_modules/abc.md")
 	shouldMatch(test, object, "node_modules/gulp/node_modules/abc.json")

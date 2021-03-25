@@ -63,6 +63,7 @@ import (
 // IgnoreParser is an interface with `MatchesPaths`.
 type IgnoreParser interface {
 	MatchesPath(f string) bool
+	MatchesPathHow(f string) (bool, *IgnorePattern)
 }
 
 ////////////////////////////////////////////////////////////
@@ -147,15 +148,17 @@ func getPatternFromLine(line string) (*regexp.Regexp, bool) {
 
 ////////////////////////////////////////////////////////////
 
-// ignorePattern encapsulates a pattern and if it is a negated pattern.
-type ignorePattern struct {
-	pattern *regexp.Regexp
-	negate  bool
+// IgnorePattern encapsulates a pattern and if it is a negated pattern.
+type IgnorePattern struct {
+	Pattern *regexp.Regexp
+	Negate  bool
+	LineNo  int
+	Line    string
 }
 
 // GitIgnore wraps a list of ignore pattern.
 type GitIgnore struct {
-	patterns []*ignorePattern
+	patterns []*IgnorePattern
 }
 
 // CompileIgnoreLines accepts a variadic set of strings, and returns a GitIgnore
@@ -163,10 +166,10 @@ type GitIgnore struct {
 // patterns held within the GitIgnore objects "patterns" field.
 func CompileIgnoreLines(lines ...string) *GitIgnore {
 	gi := &GitIgnore{}
-	for _, line := range lines {
+	for i, line := range lines {
 		pattern, negatePattern := getPatternFromLine(line)
 		if pattern != nil {
-			ip := &ignorePattern{pattern, negatePattern}
+			ip := &IgnorePattern{pattern, negatePattern, i, line}
 			gi.patterns = append(gi.patterns, ip)
 		}
 	}
@@ -208,10 +211,10 @@ func (gi *GitIgnore) MatchesPath(f string) bool {
 
 	matchesPath := false
 	for _, ip := range gi.patterns {
-		if ip.pattern.MatchString(f) {
+		if ip.Pattern.MatchString(f) {
 			// If this is a regular target (not negated with a gitignore
 			// exclude "!" etc)
-			if !ip.negate {
+			if !ip.Negate {
 				matchesPath = true
 			} else if matchesPath {
 				// Negated pattern, and matchesPath is already set
@@ -220,6 +223,30 @@ func (gi *GitIgnore) MatchesPath(f string) bool {
 		}
 	}
 	return matchesPath
+}
+
+// MatchesPathHow returns true, pattern if the given GitIgnore structure would target
+// a given path string `f`.
+func (gi *GitIgnore) MatchesPathHow(f string) (bool, *IgnorePattern) {
+	// Replace OS-specific path separator.
+	f = strings.Replace(f, string(os.PathSeparator), "/", -1)
+
+	matchesPath := false
+	var mip *IgnorePattern
+	for _, ip := range gi.patterns {
+		if ip.Pattern.MatchString(f) {
+			// If this is a regular target (not negated with a gitignore
+			// exclude "!" etc)
+			if !ip.Negate {
+				matchesPath = true
+				mip = ip
+			} else if matchesPath {
+				// Negated pattern, and matchesPath is already set
+				matchesPath = false
+			}
+		}
+	}
+	return matchesPath, mip
 }
 
 ////////////////////////////////////////////////////////////

@@ -169,7 +169,8 @@ func CompileIgnoreLines(lines ...string) *GitIgnore {
 	for i, line := range lines {
 		pattern, negatePattern := getPatternFromLine(line)
 		if pattern != nil {
-			ip := &IgnorePattern{pattern, negatePattern, i, line}
+			// LineNo is 1-based numbering to match `git check-ignore -v` output
+			ip := &IgnorePattern{pattern, negatePattern, i + 1, line}
 			gi.patterns = append(gi.patterns, ip)
 		}
 	}
@@ -206,27 +207,13 @@ func CompileIgnoreFileAndLines(fpath string, lines ...string) (*GitIgnore, error
 // MatchesPath returns true if the given GitIgnore structure would target
 // a given path string `f`.
 func (gi *GitIgnore) MatchesPath(f string) bool {
-	// Replace OS-specific path separator.
-	f = strings.Replace(f, string(os.PathSeparator), "/", -1)
-
-	matchesPath := false
-	for _, ip := range gi.patterns {
-		if ip.Pattern.MatchString(f) {
-			// If this is a regular target (not negated with a gitignore
-			// exclude "!" etc)
-			if !ip.Negate {
-				matchesPath = true
-			} else if matchesPath {
-				// Negated pattern, and matchesPath is already set
-				matchesPath = false
-			}
-		}
-	}
+	matchesPath, _ := gi.MatchesPathHow(f)
 	return matchesPath
 }
 
-// MatchesPathHow returns true, pattern if the given GitIgnore structure would target
+// MatchesPathHow returns true, `pattern` if the given GitIgnore structure would target
 // a given path string `f`.
+// The IgnorePattern has the Line, LineNo fields.
 func (gi *GitIgnore) MatchesPathHow(f string) (bool, *IgnorePattern) {
 	// Replace OS-specific path separator.
 	f = strings.Replace(f, string(os.PathSeparator), "/", -1)

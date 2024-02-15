@@ -1,4 +1,4 @@
-module github.com/sabhiram/go-gitignore
+module github.com/Diogenesoftoronto/go-gitignore
 
 go 1.22
 

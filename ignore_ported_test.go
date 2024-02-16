@@ -15,7 +15,7 @@ type Test struct {
 
 func TestCompileIgnoreFile(t *testing.T) {
 	t.Parallel()
-	// TODO Add benchmarking.
+
 	tests := genTests()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -158,4 +158,3 @@ func genTests() []Test {
 	}
 	return tests
 }
-

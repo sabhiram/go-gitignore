@@ -6,17 +6,55 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Test struct {
+	name         string
+	lines        []string
+	wantMatch    []string
+	wantNotMatch []string
+}
+
 func TestCompileIgnoreFile(t *testing.T) {
 	t.Parallel()
 	// TODO Add benchmarking.
-	type Test struct {
-		name         string
-		lines        []string
-		wantMatch    []string
-		wantNotMatch []string
+	tests := genTests()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			obj := CompileIgnoreLines(tt.lines...)
+			for _, w := range tt.wantMatch {
+				assert.Equal(t, true, obj.MatchesPath(w), w+": should match")
+			}
+			for _, wN := range tt.wantNotMatch {
+				assert.NotEqual(t, true, obj.MatchesPath(wN), wN+": should not match")
+			}
+		})
 	}
-	for _, tt := range []Test{
-		// TODO Consider a test fuzzer or something similar, it could go a long way to getting this a bit better.
+
+}
+
+func BenchmarkCompileIgnorelines(b *testing.B) {
+	tests := genTests()
+
+	for _, tt := range tests {
+		b.Run(tt.name, func(bb *testing.B) {
+
+			for i := 0; i < b.N; i++ {
+				obj := CompileIgnoreLines(tt.lines...)
+				for _, w := range tt.wantMatch {
+					obj.MatchesPath(w)
+				}
+				for _, wN := range tt.wantNotMatch {
+					obj.MatchesPath(wN)
+				}
+			}
+
+		})
+	}
+}
+
+func genTests() []Test {
+	tests := []Test{
 		{
 			name:         "Should match simple, from root and anywhere",
 			lines:        []string{"foo", "**/foo", "/**/foo"},
@@ -108,24 +146,6 @@ func TestCompileIgnoreFile(t *testing.T) {
 			wantNotMatch: []string{"meme.DS_Store", "meme.d", "abc/meme.d"},
 		},
 		{
-			name:         "",
-			lines:        []string{},
-			wantMatch:    []string{},
-			wantNotMatch: []string{},
-		},
-		{
-			name:         "",
-			lines:        []string{},
-			wantMatch:    []string{},
-			wantNotMatch: []string{},
-		},
-		{
-			name:         "",
-			lines:        []string{},
-			wantMatch:    []string{},
-			wantNotMatch: []string{},
-		},
-		{
 			name:      "Should match pattern once",
 			lines:     []string{"node_modules/"},
 			wantMatch: []string{"node_modules/gulp/node_modules/abc.md", "node_modules/gulp/node_modules/abc.json"},
@@ -135,17 +155,7 @@ func TestCompileIgnoreFile(t *testing.T) {
 			lines:     []string{"node_modules/", "node_modules/"},
 			wantMatch: []string{"node_modules/gulp/node_modules/abc.md", "node_modules/gulp/node_modules/abc.json"},
 		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			obj := CompileIgnoreLines(tt.lines...)
-			for _, w := range tt.wantMatch {
-				assert.Equal(t, true, obj.MatchesPath(w), w+": should match")
-			}
-			for _, wN := range tt.wantNotMatch {
-				assert.NotEqual(t, true, obj.MatchesPath(wN), wN+": should not match")
-			}
-		})
 	}
+	return tests
 }
+
